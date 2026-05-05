@@ -61,13 +61,9 @@ public final class EasingEngine {
         let easedProgress = parameters.easeInCurve.value(at: 0.6)
 
         if side.isVerticalBoundary {
-            let sourceRange = source.frame.minY...source.frame.maxY
-            let destinationRange = destination.frame.minY...destination.frame.maxY
-            point.y = mapCoordinate(crossingPoint.y, from: sourceRange, to: destinationRange)
+            point.y = crossingPoint.y
         } else {
-            let sourceRange = source.frame.minX...source.frame.maxX
-            let destinationRange = destination.frame.minX...destination.frame.maxX
-            point.x = mapCoordinate(crossingPoint.x, from: sourceRange, to: destinationRange)
+            point.x = crossingPoint.x
         }
 
         if let overlapRange {
@@ -84,13 +80,22 @@ public final class EasingEngine {
             let ratio = sourceDPI / destinationDPI
             let durationInSeconds = CGFloat(parameters.crossingDurationMS) / 1000
 
-            point.x += velocity.dx * durationInSeconds * easedProgress * ratio
-            point.y += velocity.dy * durationInSeconds * easedProgress * ratio
+            if side.isVerticalBoundary {
+                point.x += velocity.dx * durationInSeconds * easedProgress * ratio
+            } else {
+                point.y += velocity.dy * durationInSeconds * easedProgress * ratio
+            }
         }
 
-        let destinationBounds = destination.frame.insetBy(dx: 1, dy: 1)
-        point.x = min(max(point.x, destinationBounds.minX), destinationBounds.maxX)
-        point.y = min(max(point.y, destinationBounds.minY), destinationBounds.maxY)
+        if side.isVerticalBoundary {
+            let innerX = destination.frame.minX + 1 ... destination.frame.maxX - 1
+            point.x = min(max(point.x, innerX.lowerBound), innerX.upperBound)
+            point.y = min(max(point.y, destination.frame.minY), destination.frame.maxY)
+        } else {
+            let innerY = destination.frame.minY + 1 ... destination.frame.maxY - 1
+            point.y = min(max(point.y, innerY.lowerBound), innerY.upperBound)
+            point.x = min(max(point.x, destination.frame.minX), destination.frame.maxX)
+        }
         return point
     }
 
@@ -105,11 +110,5 @@ public final class EasingEngine {
         case .bottom:
             return CGPoint(x: point.x, y: destination.frame.maxY - 1)
         }
-    }
-
-    private func mapCoordinate(_ value: CGFloat, from source: ClosedRange<CGFloat>, to destination: ClosedRange<CGFloat>) -> CGFloat {
-        let sourceLength = max(source.upperBound - source.lowerBound, 1)
-        let normalized = (value - source.lowerBound) / sourceLength
-        return destination.lowerBound + (normalized * (destination.upperBound - destination.lowerBound))
     }
 }
