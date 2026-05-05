@@ -17,7 +17,7 @@ public enum DisplaySide: String, CaseIterable, Codable, Sendable {
     }
 }
 
-public struct DisplayInfo: Equatable, Hashable, Sendable {
+public struct DisplayInfo: Equatable, Sendable {
     public let id: CGDirectDisplayID
     public let frame: CGRect
     public let backingScaleFactor: CGFloat
