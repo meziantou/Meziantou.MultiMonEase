@@ -14,6 +14,7 @@ public final class CursorRouter: CursorRouting {
     private var crossingState: CrossingState = .idle
     private var deltaSamples: [CGVector] = []
     private let maxDeltaSamples = 8
+    private let cornerSnapThreshold: CGFloat = 24
 
     public init(topology: ScreenTopology, easing: EasingEngine, settings: Settings) {
         self.topology = topology
@@ -51,14 +52,42 @@ public final class CursorRouter: CursorRouting {
         }
 
         let sharedAxisCoordinate = crossingSide.sharedCoordinate(for: currentPoint)
-        guard
-            let adjacency = topology.adjacency(
-                from: sourceDisplay.id,
-                side: crossingSide,
-                coordinate: sharedAxisCoordinate
-            ),
-            let destinationDisplay = topology.display(for: adjacency.toDisplay)
-        else {
+        var adjustedCrossingPoint = currentPoint
+        let adjacency: EdgeAdjacency
+
+        if let directAdjacency = topology.adjacency(
+            from: sourceDisplay.id,
+            side: crossingSide,
+            coordinate: sharedAxisCoordinate
+        ) {
+            adjacency = directAdjacency
+        } else {
+            let candidates = topology.adjacencies(from: sourceDisplay.id, side: crossingSide)
+            guard let nearestAdjacency = nearestAdjacency(to: sharedAxisCoordinate, in: candidates) else {
+                AppLogger.routing.debug(
+                    "Blocked \(sourceDisplay.name, privacy: .public) via \(crossingSide.rawValue, privacy: .public): no adjacent display"
+                )
+                return Unmanaged.passUnretained(event)
+            }
+
+            let distance = distanceToRange(sharedAxisCoordinate, nearestAdjacency.overlapRange)
+            guard distance <= cornerSnapThreshold else {
+                AppLogger.routing.debug(
+                    "Blocked \(sourceDisplay.name, privacy: .public) via \(crossingSide.rawValue, privacy: .public): outside overlap by \(distance, privacy: .public)"
+                )
+                return Unmanaged.passUnretained(event)
+            }
+
+            let snappedCoordinate = clamp(sharedAxisCoordinate, to: nearestAdjacency.overlapRange)
+            adjustedCrossingPoint = point(currentPoint, byReplacingSharedCoordinateFor: crossingSide, with: snappedCoordinate)
+            adjacency = nearestAdjacency
+
+            AppLogger.routing.debug(
+                "Corner-snap \(sourceDisplay.name, privacy: .public) via \(crossingSide.rawValue, privacy: .public) (\(sharedAxisCoordinate, privacy: .public) -> \(snappedCoordinate, privacy: .public))"
+            )
+        }
+
+        guard let destinationDisplay = topology.display(for: adjacency.toDisplay) else {
             return Unmanaged.passUnretained(event)
         }
 
@@ -70,7 +99,7 @@ public final class CursorRouter: CursorRouting {
         let remappedPoint = easing.remap(
             from: sourceDisplay,
             to: destinationDisplay,
-            crossingPoint: currentPoint,
+            crossingPoint: adjustedCrossingPoint,
             velocity: averageVelocity(),
             side: crossingSide,
             overlapRange: adjacency.overlapRange
@@ -119,6 +148,36 @@ public final class CursorRouter: CursorRouting {
             return .bottom
         }
         return nil
+    }
+
+    private func nearestAdjacency(to coordinate: CGFloat, in candidates: [EdgeAdjacency]) -> EdgeAdjacency? {
+        candidates.min { lhs, rhs in
+            distanceToRange(coordinate, lhs.overlapRange) < distanceToRange(coordinate, rhs.overlapRange)
+        }
+    }
+
+    private func distanceToRange(_ coordinate: CGFloat, _ range: ClosedRange<CGFloat>) -> CGFloat {
+        if range.contains(coordinate) {
+            return 0
+        }
+
+        if coordinate < range.lowerBound {
+            return range.lowerBound - coordinate
+        }
+
+        return coordinate - range.upperBound
+    }
+
+    private func clamp(_ coordinate: CGFloat, to range: ClosedRange<CGFloat>) -> CGFloat {
+        min(max(coordinate, range.lowerBound), range.upperBound)
+    }
+
+    private func point(_ point: CGPoint, byReplacingSharedCoordinateFor side: DisplaySide, with coordinate: CGFloat) -> CGPoint {
+        if side.isVerticalBoundary {
+            return CGPoint(x: point.x, y: coordinate)
+        }
+
+        return CGPoint(x: coordinate, y: point.y)
     }
 
     private func isWithinAntiOscillationWindow() -> Bool {

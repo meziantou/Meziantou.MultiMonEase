@@ -138,6 +138,12 @@ public final class ScreenTopology {
         }
     }
 
+    public func adjacencies(from displayID: CGDirectDisplayID, side: DisplaySide) -> [EdgeAdjacency] {
+        adjacencies.filter {
+            $0.fromDisplay == displayID && $0.side == side
+        }
+    }
+
     public static func computeAdjacencies(displays: [DisplayInfo], tolerance: CGFloat = 1) -> [EdgeAdjacency] {
         var result: [EdgeAdjacency] = []
 
