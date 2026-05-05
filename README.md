@@ -5,7 +5,7 @@ MultiMonEase is a macOS menu bar utility that smooths cursor transitions between
 ## Requirements
 
 - macOS 13+
-- Swift 6.3 toolchain (builds in Swift language mode 5)
+- Swift 5.10+ toolchain (builds in Swift language mode 5)
 
 ## Local development
 
