@@ -15,6 +15,7 @@ public final class CursorRouter: CursorRouting {
     private var deltaSamples: [CGVector] = []
     private let maxDeltaSamples = 8
     private let cornerSnapThreshold: CGFloat = 24
+    private let cornerActivationDistance: CGFloat = 40
 
     public init(topology: ScreenTopology, easing: EasingEngine, settings: Settings) {
         self.topology = topology
@@ -52,6 +53,7 @@ public final class CursorRouter: CursorRouting {
         }
 
         let sharedAxisCoordinate = crossingSide.sharedCoordinate(for: currentPoint)
+        let cornerPush = isNearCorner(on: crossingSide, point: currentPoint, in: sourceDisplay.frame)
         var adjustedCrossingPoint = currentPoint
         let adjacency: EdgeAdjacency
 
@@ -71,7 +73,7 @@ public final class CursorRouter: CursorRouting {
             }
 
             let distance = distanceToRange(sharedAxisCoordinate, nearestAdjacency.overlapRange)
-            guard distance <= cornerSnapThreshold else {
+            guard distance <= cornerSnapThreshold || cornerPush else {
                 AppLogger.routing.debug(
                     "Blocked \(sourceDisplay.name, privacy: .public) via \(crossingSide.rawValue, privacy: .public): outside overlap by \(distance, privacy: .public)"
                 )
@@ -83,7 +85,7 @@ public final class CursorRouter: CursorRouting {
             adjacency = nearestAdjacency
 
             AppLogger.routing.debug(
-                "Corner-snap \(sourceDisplay.name, privacy: .public) via \(crossingSide.rawValue, privacy: .public) (\(sharedAxisCoordinate, privacy: .public) -> \(snappedCoordinate, privacy: .public))"
+                "Corner-snap \(sourceDisplay.name, privacy: .public) via \(crossingSide.rawValue, privacy: .public) (\(sharedAxisCoordinate, privacy: .public) -> \(snappedCoordinate, privacy: .public), cornerPush=\(cornerPush, privacy: .public))"
             )
         }
 
@@ -148,6 +150,22 @@ public final class CursorRouter: CursorRouting {
             return .bottom
         }
         return nil
+    }
+
+    private func isNearCorner(on side: DisplaySide, point: CGPoint, in frame: CGRect) -> Bool {
+        let coordinate = side.sharedCoordinate(for: point)
+
+        let distanceToLower: CGFloat
+        let distanceToUpper: CGFloat
+        if side.isVerticalBoundary {
+            distanceToLower = abs(coordinate - frame.minY)
+            distanceToUpper = abs(coordinate - frame.maxY)
+        } else {
+            distanceToLower = abs(coordinate - frame.minX)
+            distanceToUpper = abs(coordinate - frame.maxX)
+        }
+
+        return min(distanceToLower, distanceToUpper) <= cornerActivationDistance
     }
 
     private func nearestAdjacency(to coordinate: CGFloat, in candidates: [EdgeAdjacency]) -> EdgeAdjacency? {
