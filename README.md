@@ -22,3 +22,14 @@ MultiMonEase is a macOS menu bar utility that prevents the cursor from getting b
 1. On first run, grant Accessibility permission when prompted.
 1. Move the pointer between monitors to feel smoother transitions.
 1. Open **Preferences** from the menu bar icon to adjust behavior.
+
+## Troubleshooting: permission shows as required even when enabled
+
+If the menu still shows **Permissions: Required** while Accessibility already lists MultiMonEase:
+
+1. Remove existing **MultiMonEase** entries from **System Settings** > **Privacy & Security** > **Accessibility**.
+1. Make sure you run a single app instance from a stable path (recommended: `/Applications/MultiMonEase.app`).
+1. Open MultiMonEase again and grant Accessibility access.
+
+macOS binds Accessibility trust to the running app identity (code signature + executable location).  
+If the app binary changes identity (for example after replacing an ad-hoc-signed build or running from another path), the previous entry can become stale.
