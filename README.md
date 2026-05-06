@@ -16,20 +16,9 @@ MultiMonEase is a macOS menu bar app that makes your mouse pointer move smoothly
 ```mermaid
 flowchart LR
     A["Display A"] --> B["Screen border"]
-    B -->|Without MultiMonEase| C["Pointer feels jumpy"]
+    B -->|Without MultiMonEase| C["Pointer feels blocked"]
     B -->|With MultiMonEase| D["Pointer glides smoothly"]
     D --> E["Display B"]
-```
-
-### How you control it
-
-```mermaid
-flowchart TB
-    I["Menu bar icon"] --> T["Easing enabled (on/off)"]
-    I --> P["Preferences"]
-    P --> S["Crossing duration"]
-    P --> V["Preserve physical velocity"]
-    P --> E["Enable/disable specific screen edges"]
 ```
 
 ## Download
