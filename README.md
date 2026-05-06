@@ -1,31 +1,23 @@
-# Meziantou.MultiMonEase
+# MultiMonEase
 
-MultiMonEase is a macOS menu bar utility that smooths cursor transitions between adjacent displays with mismatched resolutions and physical DPI.
+MultiMonEase is a macOS menu bar utility that prevents the cursor from getting blocked at monitor borders when adjacent screens have different sizes, resolutions, or DPI, making cross-screen movement feel continuous.
 
-## Requirements
+# Features
 
-- macOS 13+
-- Swift 5.10+ toolchain (builds in Swift language mode 5)
+- Prevents “stuck at the edge” behavior on mismatched display borders
+- Seam-aware cursor remapping to the nearest valid overlap when borders don’t align perfectly
+- Smooth cross-screen transition instead of abrupt jumps
+- Optional physical-velocity preservation for natural pointer motion across mixed-DPI screens
+- Per-edge enable/disable controls for specific monitor transitions
+- Live topology updates when displays are connected, disconnected, or rearranged
 
-## Local development
+## How to use
 
-```sh
-swift build
-swift test
-swift run MultiMonEase
-```
-
-When first launched, grant Accessibility permissions in **System Settings → Privacy & Security → Accessibility**.
-
-## Architecture
-
-- **Input:** `EventTapController` captures mouse move/drag events.
-- **Routing:** `CursorRouter` determines seam crossings and applies anti-oscillation cooldown.
-- **Topology:** `ScreenTopology` tracks displays and edge overlaps live.
-- **Easing:** `EasingEngine` remaps crossings using configurable smoothing and optional physical-velocity preservation.
-- **UI:** `StatusBarController` + `PreferencesWindowController`.
-
-## CI and release
-
-- `.github/workflows/ci-build.yml` builds and tests on every PR.
-- `.github/workflows/build-release.yml` builds a macOS `.app`, signs/notarizes when secrets are configured, then creates a GitHub release artifact for tagged versions (`v*`).
+1. Download the app from the [latest release](https://github.com/meziantou/Meziantou.MultiMonEase/releases/latest).
+1. Move the application to your Applications folder.
+1. `xattr -dr com.apple.quarantine /Applications/MultiMonEase.app` to remove the quarantine attribute.
+1. Open the app from the Applications folder.
+1. The app appears in your macOS menu bar.
+1. On first run, grant Accessibility permission when prompted.
+1. Move the pointer between monitors to feel smoother transitions.
+1. Open **Preferences** from the menu bar icon to adjust behavior.
