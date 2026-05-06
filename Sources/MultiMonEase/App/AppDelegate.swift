@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let topology = ScreenTopology()
     private let easingEngine = EasingEngine()
     private let eventTapController = EventTapController()
+    private let updateChecker = UpdateChecker()
 
     private lazy var router = CursorRouter(
         topology: topology,
@@ -16,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusBarController: StatusBarController?
     private var preferencesWindowController: PreferencesWindowController?
+    private var automaticUpdateCheckTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         topology.start()
@@ -28,6 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             topology: topology,
             showPreferences: { [weak self] in
                 self?.preferencesWindowController?.showWindow()
+            },
+            checkForUpdates: { [weak self] in
+                self?.checkForUpdates(trigger: .manual)
             }
         )
 
@@ -36,12 +41,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         permissionsManager.startMonitoring()
         handlePermissionChange(permissionsManager.isTrusted())
+        startAutomaticUpdateChecks()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         permissionsManager.stopMonitoring()
         eventTapController.stop()
         topology.stop()
+        stopAutomaticUpdateChecks()
     }
 
     private func handlePermissionChange(_ isTrusted: Bool) {
@@ -60,6 +67,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try eventTapController.start()
         } catch {
             AppLogger.app.error("Unable to start event tap: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    private func startAutomaticUpdateChecks() {
+        checkForUpdates(trigger: .automatic)
+        stopAutomaticUpdateChecks()
+
+        let timer = Timer(timeInterval: UpdateChecker.automaticCheckInterval, repeats: true) { [weak self] _ in
+            self?.checkForUpdates(trigger: .automatic)
+        }
+
+        automaticUpdateCheckTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    private func stopAutomaticUpdateChecks() {
+        automaticUpdateCheckTimer?.invalidate()
+        automaticUpdateCheckTimer = nil
+    }
+
+    private func checkForUpdates(trigger: UpdateChecker.Trigger) {
+        Task {
+            await updateChecker.checkForUpdates(trigger: trigger)
         }
     }
 }

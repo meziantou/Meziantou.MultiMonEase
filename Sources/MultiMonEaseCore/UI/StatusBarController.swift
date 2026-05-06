@@ -9,11 +9,13 @@ public final class StatusBarController: NSObject, NSMenuDelegate {
     private let permissionsManager: PermissionsManager
     private let topology: ScreenTopology
     private let showPreferences: () -> Void
+    private let checkForUpdatesAction: () -> Void
     private var cancellables = Set<AnyCancellable>()
 
     private let menu = NSMenu()
     private let enabledItem = NSMenuItem(title: "Easing enabled", action: #selector(toggleEnabled), keyEquivalent: "")
     private let preferencesItem = NSMenuItem(title: "Preferences…", action: #selector(openPreferences), keyEquivalent: ",")
+    private let checkForUpdatesItem = NSMenuItem(title: "Check for updates…", action: #selector(checkForUpdates), keyEquivalent: "")
     private let permissionsItem = NSMenuItem(title: "Permissions", action: #selector(handlePermissions), keyEquivalent: "")
     private let launchAtLoginItem = NSMenuItem(title: "Launch at login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
     private let aboutItem = NSMenuItem(title: "About", action: #selector(openAbout), keyEquivalent: "")
@@ -23,12 +25,14 @@ public final class StatusBarController: NSObject, NSMenuDelegate {
         settings: Settings,
         permissionsManager: PermissionsManager,
         topology: ScreenTopology,
-        showPreferences: @escaping () -> Void
+        showPreferences: @escaping () -> Void,
+        checkForUpdates: @escaping () -> Void
     ) {
         self.settings = settings
         self.permissionsManager = permissionsManager
         self.topology = topology
         self.showPreferences = showPreferences
+        checkForUpdatesAction = checkForUpdates
         super.init()
 
         configureStatusItem()
@@ -68,7 +72,7 @@ public final class StatusBarController: NSObject, NSMenuDelegate {
     private func configureMenu() {
         menu.delegate = self
 
-        [enabledItem, preferencesItem, permissionsItem, .separator(), launchAtLoginItem, aboutItem, quitItem]
+        [enabledItem, preferencesItem, checkForUpdatesItem, permissionsItem, .separator(), launchAtLoginItem, aboutItem, quitItem]
             .forEach {
                 $0.target = self
                 menu.addItem($0)
@@ -99,6 +103,10 @@ public final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func openPreferences() {
         showPreferences()
+    }
+
+    @objc private func checkForUpdates() {
+        checkForUpdatesAction()
     }
 
     @objc private func handlePermissions() {

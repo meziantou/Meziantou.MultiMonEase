@@ -10,6 +10,7 @@ MultiMonEase is a macOS menu bar utility that prevents the cursor from getting b
 - Optional physical-velocity preservation for natural pointer motion across mixed-DPI screens
 - Per-edge enable/disable controls for specific monitor transitions
 - Live topology updates when displays are connected, disconnected, or rearranged
+- Automatic GitHub release checks with a manual **Check for updates…** menu action
 
 ## How to use
 
