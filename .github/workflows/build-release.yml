@@ -135,5 +135,12 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: ${{ env.RELEASE_TAG }}
           prerelease: ${{ env.RELEASE_PRERELEASE }}
+          body: |
+            If macOS blocks the app after downloading from release assets, run:
+
+            ```bash
+            xattr -dr com.apple.quarantine /Applications/MultiMonEase.app
+            ```
+
           generate_release_notes: true
           files: dist/*
