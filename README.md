@@ -1,31 +1,55 @@
-# Meziantou.MultiMonEase
+# MultiMonEase
 
-MultiMonEase is a macOS menu bar utility that smooths cursor transitions between adjacent displays with mismatched resolutions and physical DPI.
+MultiMonEase is a macOS menu bar app that makes your mouse pointer move smoothly between monitors, especially when displays have different sizes or scaling.
 
-## Requirements
+## What it does
 
-- macOS 13+
-- Swift 5.10+ toolchain (builds in Swift language mode 5)
+- Reduces sudden cursor jumps at monitor borders.
+- Makes crossing from one screen to another feel more natural.
+- Lets you quickly enable/disable smoothing from the menu bar.
+- Lets you tune behavior in Preferences (global toggle, crossing speed, per-edge control).
 
-## Local development
+## Drawings
 
-```sh
-swift build
-swift test
-swift run MultiMonEase
+### Cursor behavior at the screen border
+
+```mermaid
+flowchart LR
+    A["Display A"] --> B["Screen border"]
+    B -->|Without MultiMonEase| C["Pointer feels jumpy"]
+    B -->|With MultiMonEase| D["Pointer glides smoothly"]
+    D --> E["Display B"]
 ```
 
-When first launched, grant Accessibility permissions in **System Settings → Privacy & Security → Accessibility**.
+### How you control it
 
-## Architecture
+```mermaid
+flowchart TB
+    I["Menu bar icon"] --> T["Easing enabled (on/off)"]
+    I --> P["Preferences"]
+    P --> S["Crossing duration"]
+    P --> V["Preserve physical velocity"]
+    P --> E["Enable/disable specific screen edges"]
+```
 
-- **Input:** `EventTapController` captures mouse move/drag events.
-- **Routing:** `CursorRouter` determines seam crossings and applies anti-oscillation cooldown.
-- **Topology:** `ScreenTopology` tracks displays and edge overlaps live.
-- **Easing:** `EasingEngine` remaps crossings using configurable smoothing and optional physical-velocity preservation.
-- **UI:** `StatusBarController` + `PreferencesWindowController`.
+## Download
 
-## CI and release
+Get the latest version from the GitHub releases page:
 
-- `.github/workflows/ci-build.yml` builds and tests on every PR.
-- `.github/workflows/build-release.yml` builds a macOS `.app`, signs/notarizes when secrets are configured, then creates a GitHub release artifact for tagged versions (`v*`).
+**[Download the latest release](https://github.com/meziantou/Meziantou.MultiMonEase/releases/latest)**
+
+On the release page, download the app package from **Assets**, then open it on your Mac.
+
+## How to use
+
+1. Download the app from the [latest release](https://github.com/meziantou/Meziantou.MultiMonEase/releases/latest).
+2. The app appears in your macOS menu bar.
+3. On first run, grant Accessibility permission when prompted.
+4. Move the pointer between monitors to feel smoother transitions.
+5. Open **Preferences** from the menu bar icon to adjust behavior.
+
+## Tips
+
+- If crossing feels too slow, lower the crossing duration.
+- If one border feels odd, disable easing only for that specific edge.
+- Turn on **Launch at login** in the menu to keep it always available.
