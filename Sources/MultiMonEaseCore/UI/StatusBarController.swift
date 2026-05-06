@@ -4,6 +4,7 @@ import Foundation
 import ServiceManagement
 
 public final class StatusBarController: NSObject, NSMenuDelegate {
+    private static let projectURL = URL(string: "https://github.com/meziantou/Meziantou.MultiMonEase")!
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let settings: Settings
     private let permissionsManager: PermissionsManager
@@ -132,7 +133,18 @@ public final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func openAbout() {
-        NSApplication.shared.orderFrontStandardAboutPanel(nil)
+        let credits = NSMutableAttributedString(string: "Created by Gérald Barré\n")
+        credits.append(
+            NSAttributedString(
+                string: "GitHub project",
+                attributes: [
+                    .link: Self.projectURL,
+                    .foregroundColor: NSColor.linkColor,
+                ]
+            )
+        )
+
+        NSApplication.shared.orderFrontStandardAboutPanel(options: [.credits: credits])
         NSApplication.shared.activate(ignoringOtherApps: true)
     }
 
