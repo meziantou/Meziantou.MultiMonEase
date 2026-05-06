@@ -6,4 +6,5 @@ public enum AppLogger {
     public static let topology = Logger(subsystem: subsystem, category: "topology")
     public static let routing = Logger(subsystem: subsystem, category: "routing")
     public static let permissions = Logger(subsystem: subsystem, category: "permissions")
+    public static let updates = Logger(subsystem: subsystem, category: "updates")
 }
