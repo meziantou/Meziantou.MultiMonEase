@@ -64,6 +64,18 @@ private struct PreferencesRootView: View {
             Toggle("Preserve physical velocity", isOn: $settings.preservePhysicalVelocity)
 
             VStack(alignment: .leading, spacing: 8) {
+                Text("Edge resistance: \(Int(settings.edgeResistanceDistancePx.rounded())) px")
+                Slider(
+                    value: $settings.edgeResistanceDistancePx,
+                    in: 0...100,
+                    step: 1
+                )
+                Text("Require extra movement at a display border before crossing to reduce accidental jumps.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Per-edge enablement")
                     .font(.headline)
 

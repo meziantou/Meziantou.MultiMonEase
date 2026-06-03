@@ -82,6 +82,11 @@ public final class ScreenTopology {
 
     public init() {}
 
+    public init(displays: [DisplayInfo], adjacencies: [EdgeAdjacency]? = nil) {
+        self.displays = displays
+        self.adjacencies = adjacencies ?? ScreenTopology.computeAdjacencies(displays: displays)
+    }
+
     public func start() {
         refresh()
         guard !callbackRegistered else { return }

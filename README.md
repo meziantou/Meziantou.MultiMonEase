@@ -7,6 +7,7 @@ MultiMonEase is a macOS menu bar utility that prevents the cursor from getting b
 - Prevents “stuck at the edge” behavior on mismatched display borders
 - Seam-aware cursor remapping to the nearest valid overlap when borders don’t align perfectly
 - Smooth cross-screen transition instead of abrupt jumps
+- Edge resistance to require extra push distance before crossing (default: 12 px)
 - Optional physical-velocity preservation for natural pointer motion across mixed-DPI screens
 - Per-edge enable/disable controls for specific monitor transitions
 - Live topology updates when displays are connected, disconnected, or rearranged
