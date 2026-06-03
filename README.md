@@ -32,5 +32,5 @@ If the menu still shows **Permissions: Required** while Accessibility already li
 1. Make sure you run a single app instance from a stable path (recommended: `/Applications/MultiMonEase.app`).
 1. Open MultiMonEase again and grant Accessibility access.
 
-macOS binds Accessibility trust to the running app identity (code signature + executable location).  
+macOS binds Accessibility trust to the running app identity (code signature + executable location).
 If the app binary changes identity (for example after replacing an ad-hoc-signed build or running from another path), the previous entry can become stale.
