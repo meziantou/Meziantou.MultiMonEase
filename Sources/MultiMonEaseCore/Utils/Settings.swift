@@ -6,6 +6,7 @@ public struct SettingsSnapshot: Codable, Sendable {
     public var crossingDurationMS = 80
     public var preservePhysicalVelocity = true
     public var antiOscillationCooldownMS = 50
+    public var edgeResistanceDistancePx = 12.0
     public var disabledEdges: Set<String> = []
 }
 
@@ -42,6 +43,17 @@ public final class Settings: ObservableObject {
         }
     }
 
+    @Published public var edgeResistanceDistancePx: Double {
+        didSet {
+            let clampedValue = min(max(edgeResistanceDistancePx, 0), 200)
+            if edgeResistanceDistancePx != clampedValue {
+                edgeResistanceDistancePx = clampedValue
+                return
+            }
+            save()
+        }
+    }
+
     @Published public var disabledEdges: Set<String> {
         didSet { save() }
     }
@@ -67,6 +79,7 @@ public final class Settings: ObservableObject {
         crossingDurationMS = snapshot.crossingDurationMS
         preservePhysicalVelocity = snapshot.preservePhysicalVelocity
         antiOscillationCooldownMS = snapshot.antiOscillationCooldownMS
+        edgeResistanceDistancePx = snapshot.edgeResistanceDistancePx
         disabledEdges = snapshot.disabledEdges
     }
 
@@ -89,6 +102,7 @@ public final class Settings: ObservableObject {
         crossingDurationMS = 80
         preservePhysicalVelocity = true
         antiOscillationCooldownMS = 50
+        edgeResistanceDistancePx = 12
         disabledEdges = []
         isLoading = false
         save()
@@ -102,6 +116,7 @@ public final class Settings: ObservableObject {
             crossingDurationMS: crossingDurationMS,
             preservePhysicalVelocity: preservePhysicalVelocity,
             antiOscillationCooldownMS: antiOscillationCooldownMS,
+            edgeResistanceDistancePx: edgeResistanceDistancePx,
             disabledEdges: disabledEdges
         )
 

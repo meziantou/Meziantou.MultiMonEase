@@ -102,7 +102,7 @@ public final class UpdateChecker {
         defaults: UserDefaults = .standard,
         bundle: Bundle = .main,
         session: URLSession = .shared,
-        nowProvider: @escaping @Sendable () -> Date = Date.init
+        nowProvider: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.defaults = defaults
         self.bundle = bundle

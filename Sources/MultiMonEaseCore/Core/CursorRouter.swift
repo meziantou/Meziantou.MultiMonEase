@@ -11,14 +11,36 @@ public final class CursorRouter: CursorRouting {
         case justCrossed(Date)
     }
 
+    private struct EdgeResistanceState {
+        let sourceDisplayID: CGDirectDisplayID
+        let side: DisplaySide
+        let startedAt: Date
+        var accumulatedDistance: CGFloat
+    }
+
     private var crossingState: CrossingState = .idle
+    private var edgeResistanceState: EdgeResistanceState?
     private var deltaSamples: [CGVector] = []
     private let maxDeltaSamples = 8
 
-    public init(topology: ScreenTopology, easing: EasingEngine, settings: Settings) {
+    private let prepareWarpAction: () -> Void
+    private let warpCursorAction: (CGPoint) -> Void
+    private let postSyntheticMoveAction: (CGPoint) -> Void
+
+    public init(
+        topology: ScreenTopology,
+        easing: EasingEngine,
+        settings: Settings,
+        prepareWarpAction: (() -> Void)? = nil,
+        warpCursorAction: ((CGPoint) -> Void)? = nil,
+        postSyntheticMoveAction: ((CGPoint) -> Void)? = nil
+    ) {
         self.topology = topology
         self.easing = easing
         self.settings = settings
+        self.prepareWarpAction = prepareWarpAction ?? CursorRouter.defaultPrepareWarpBehavior
+        self.warpCursorAction = warpCursorAction ?? CursorRouter.defaultWarpCursor
+        self.postSyntheticMoveAction = postSyntheticMoveAction ?? CursorRouter.defaultPostSyntheticMove(at:)
     }
 
     public func handle(event: CGEvent, type: CGEventType) -> Unmanaged<CGEvent>? {
@@ -43,10 +65,16 @@ public final class CursorRouter: CursorRouting {
 
         let intendedPoint = CGPoint(x: currentPoint.x + delta.dx, y: currentPoint.y + delta.dy)
         if sourceDisplay.frame.contains(intendedPoint) {
+            edgeResistanceState = nil
             return Unmanaged.passUnretained(event)
         }
 
         guard let crossingSide = sideForCrossing(from: sourceDisplay.frame, to: intendedPoint) else {
+            edgeResistanceState = nil
+            return Unmanaged.passUnretained(event)
+        }
+
+        if !isEdgeResistanceSatisfied(sourceDisplayID: sourceDisplay.id, side: crossingSide, delta: delta) {
             return Unmanaged.passUnretained(event)
         }
 
@@ -63,6 +91,7 @@ public final class CursorRouter: CursorRouting {
         } else {
             let candidates = topology.adjacencies(from: sourceDisplay.id, side: crossingSide)
             guard let nearestAdjacency = nearestAdjacency(to: sharedAxisCoordinate, in: candidates) else {
+                edgeResistanceState = nil
                 AppLogger.routing.debug(
                     "Blocked \(sourceDisplay.name, privacy: .public) via \(crossingSide.rawValue, privacy: .public): no adjacent display"
                 )
@@ -79,10 +108,12 @@ public final class CursorRouter: CursorRouting {
         }
 
         guard let destinationDisplay = topology.display(for: adjacency.toDisplay) else {
+            edgeResistanceState = nil
             return Unmanaged.passUnretained(event)
         }
 
         guard settings.isEnabled(for: adjacency) else {
+            edgeResistanceState = nil
             return Unmanaged.passUnretained(event)
         }
 
@@ -96,10 +127,11 @@ public final class CursorRouter: CursorRouting {
             overlapRange: adjacency.overlapRange
         )
 
-        prepareWarpBehavior()
-        CGWarpMouseCursorPosition(remappedPoint)
-        postSyntheticMove(at: remappedPoint)
+        prepareWarpAction()
+        warpCursorAction(remappedPoint)
+        postSyntheticMoveAction(remappedPoint)
         crossingState = .justCrossed(Date())
+        edgeResistanceState = nil
 
         AppLogger.routing.debug(
             "Crossed \(sourceDisplay.name, privacy: .public) -> \(destinationDisplay.name, privacy: .public) via \(crossingSide.rawValue, privacy: .public)"
@@ -139,6 +171,50 @@ public final class CursorRouter: CursorRouting {
             return .bottom
         }
         return nil
+    }
+
+    private func isEdgeResistanceSatisfied(sourceDisplayID: CGDirectDisplayID, side: DisplaySide, delta: CGVector) -> Bool {
+        let threshold = CGFloat(settings.edgeResistanceDistancePx)
+        guard threshold > 0 else {
+            edgeResistanceState = nil
+            return true
+        }
+
+        let towardEdgeDistance = distanceTowardEdge(side: side, delta: delta)
+        guard towardEdgeDistance > 0 else {
+            edgeResistanceState = nil
+            return false
+        }
+
+        if var state = edgeResistanceState,
+           state.sourceDisplayID == sourceDisplayID,
+           state.side == side
+        {
+            state.accumulatedDistance += towardEdgeDistance
+            edgeResistanceState = state
+            return state.accumulatedDistance >= threshold
+        }
+
+        edgeResistanceState = EdgeResistanceState(
+            sourceDisplayID: sourceDisplayID,
+            side: side,
+            startedAt: Date(),
+            accumulatedDistance: towardEdgeDistance
+        )
+        return towardEdgeDistance >= threshold
+    }
+
+    private func distanceTowardEdge(side: DisplaySide, delta: CGVector) -> CGFloat {
+        switch side {
+        case .left:
+            return max(CGFloat(-delta.dx), 0)
+        case .right:
+            return max(CGFloat(delta.dx), 0)
+        case .top:
+            return max(CGFloat(delta.dy), 0)
+        case .bottom:
+            return max(CGFloat(-delta.dy), 0)
+        }
     }
 
     private func nearestAdjacency(to coordinate: CGFloat, in candidates: [EdgeAdjacency]) -> EdgeAdjacency? {
@@ -185,14 +261,18 @@ public final class CursorRouter: CursorRouting {
         return false
     }
 
-    private func prepareWarpBehavior() {
+    private static func defaultPrepareWarpBehavior() {
         if let eventSource = CGEventSource(stateID: .combinedSessionState) {
             eventSource.localEventsSuppressionInterval = 0
         }
         CGAssociateMouseAndMouseCursorPosition(1)
     }
 
-    private func postSyntheticMove(at point: CGPoint) {
+    private static func defaultWarpCursor(_ point: CGPoint) {
+        _ = CGWarpMouseCursorPosition(point)
+    }
+
+    private static func defaultPostSyntheticMove(at point: CGPoint) {
         guard let moveEvent = CGEvent(
             mouseEventSource: nil,
             mouseType: .mouseMoved,
