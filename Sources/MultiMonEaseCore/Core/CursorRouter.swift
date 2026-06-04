@@ -31,16 +31,16 @@ public final class CursorRouter: CursorRouting {
         topology: ScreenTopology,
         easing: EasingEngine,
         settings: Settings,
-        prepareWarpAction: @escaping () -> Void = CursorRouter.defaultPrepareWarpBehavior,
-        warpCursorAction: @escaping (CGPoint) -> Void = CGWarpMouseCursorPosition,
-        postSyntheticMoveAction: @escaping (CGPoint) -> Void = CursorRouter.defaultPostSyntheticMove
+        prepareWarpAction: (() -> Void)? = nil,
+        warpCursorAction: ((CGPoint) -> Void)? = nil,
+        postSyntheticMoveAction: ((CGPoint) -> Void)? = nil
     ) {
         self.topology = topology
         self.easing = easing
         self.settings = settings
-        self.prepareWarpAction = prepareWarpAction
-        self.warpCursorAction = warpCursorAction
-        self.postSyntheticMoveAction = postSyntheticMoveAction
+        self.prepareWarpAction = prepareWarpAction ?? CursorRouter.defaultPrepareWarpBehavior
+        self.warpCursorAction = warpCursorAction ?? CursorRouter.defaultWarpCursor
+        self.postSyntheticMoveAction = postSyntheticMoveAction ?? CursorRouter.defaultPostSyntheticMove(at:)
     }
 
     public func handle(event: CGEvent, type: CGEventType) -> Unmanaged<CGEvent>? {
@@ -266,6 +266,10 @@ public final class CursorRouter: CursorRouting {
             eventSource.localEventsSuppressionInterval = 0
         }
         CGAssociateMouseAndMouseCursorPosition(1)
+    }
+
+    private static func defaultWarpCursor(_ point: CGPoint) {
+        _ = CGWarpMouseCursorPosition(point)
     }
 
     private static func defaultPostSyntheticMove(at point: CGPoint) {

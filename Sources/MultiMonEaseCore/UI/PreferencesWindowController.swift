@@ -67,7 +67,7 @@ private struct PreferencesRootView: View {
                 Text("Edge resistance: \(Int(settings.edgeResistanceDistancePx.rounded())) px")
                 Slider(
                     value: $settings.edgeResistanceDistancePx,
-                    in: 0...100,
+                    in: 0...200,
                     step: 1
                 )
                 Text("Require extra movement at a display border before crossing to reduce accidental jumps.")

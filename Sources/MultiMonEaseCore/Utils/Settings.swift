@@ -45,7 +45,7 @@ public final class Settings: ObservableObject {
 
     @Published public var edgeResistanceDistancePx: Double {
         didSet {
-            let clampedValue = min(max(edgeResistanceDistancePx, 0), 100)
+            let clampedValue = min(max(edgeResistanceDistancePx, 0), 200)
             if edgeResistanceDistancePx != clampedValue {
                 edgeResistanceDistancePx = clampedValue
                 return

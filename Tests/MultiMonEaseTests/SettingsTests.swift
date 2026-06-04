@@ -54,6 +54,24 @@ func settingsPersistsEdgeResistanceDistance() {
     #expect(reloaded.edgeResistanceDistancePx == 21)
 }
 
+@Test
+func settingsClampsEdgeResistanceDistanceToMaximum() {
+    let suiteName = "SettingsTests-\(UUID().uuidString)"
+    guard let defaults = UserDefaults(suiteName: suiteName) else {
+        Issue.record("Unable to create test user defaults suite")
+        return
+    }
+
+    defer {
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+
+    let settings = Settings(defaults: defaults)
+    settings.edgeResistanceDistancePx = 250
+
+    #expect(settings.edgeResistanceDistancePx == 200)
+}
+
 private struct LegacySettingsSnapshot: Codable {
     let isEnabled: Bool
     let crossingDurationMS: Int
